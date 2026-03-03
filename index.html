@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KaloCount">
+<meta name="theme-color" content="#0f1117">
+<title>KaloCount Pro</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Karla:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1f2e;
+  --card: #242938;
+  --border: #2e3548;
+  --accent: #c8f55a;
+  --accent-dim: #9ab83f;
+  --orange: #ff8c42;
+  --red: #ff4d4d;
+  --blue: #5b9cf6;
+  --green: #4ade80;
+  --purple: #a78bfa;
+  --text: #f0ede8;
+  --muted: #7a8199;
+  --safe: inset(0);
+  --bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Karla', sans-serif;
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--surface);
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+.logo { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; letter-spacing:-0.5px; }
+.logo span { color: var(--accent); }
+.install-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family:'Karla',sans-serif;
+  font-size: 0.78rem;
+  font-weight:700;
+  cursor:pointer;
+  display:none;
+}
+
+/* ── PAGES ── */
+.pages {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.page {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 12px 14px;
+  padding-bottom: calc(80px + var(--bottom));
+  display: none;
+  -webkit-overflow-scrolling: touch;
+}
+.page.active { display: block; }
+.page::-webkit-scrollbar { display: none; }
+
+/* ── BOTTOM NAV ── */
+.nav {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  padding-bottom: var(--bottom);
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 8px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family:'Karla',sans-serif;
+  font-size: 0.68rem;
+  gap: 3px;
+  transition: color 0.15s;
+  position: relative;
+}
+.nav-item.active { color: var(--accent); }
+.nav-icon { font-size: 1.35rem; line-height: 1; }
+.scan-nav {
+  position: relative;
+  top: -14px;
+}
+.scan-nav .nav-icon-wrap {
+  width: 52px; height: 52px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 20px rgba(200,245,90,0.35);
+  margin-bottom: 2px;
+}
+.scan-nav.active .nav-icon-wrap { background: var(--accent-dim); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family:'Syne',sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin: 14px 0 8px;
+}
+
+/* ── INPUTS ── */
+input[type=text], input[type=number], select {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family:'Karla',sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+input:focus, select:focus { border-color: var(--accent); }
+.row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+.row label { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.row input[type=number] { width: 80px; flex-shrink: 0; }
+.row select { flex: 1; }
+
+/* ── BUTTONS ── */
+.btn {
+  border: none; border-radius: 12px;
+  font-family:'Karla',sans-serif; font-weight:600;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #000; padding: 12px; font-size: 0.95rem; width: 100%; }
+.btn-sm { background: var(--accent); color: #000; padding: 6px 12px; font-size: 0.78rem; border-radius: 8px; }
+.btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); padding: 6px 12px; font-size: 0.78rem; border-radius: 8px; }
+.btn-danger { background: transparent; border: 1.5px solid var(--border); color: var(--red); padding: 6px 12px; font-size: 0.78rem; border-radius: 8px; }
+.btn:hover { opacity: 0.88; }
+
+/* ── SEARCH RESULTS ── */
+.results { display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; }
+.results::-webkit-scrollbar { display: none; }
+.food-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.food-item:active { border-color: var(--accent); }
+.food-item .fname { font-weight:600; font-size:0.88rem; line-height:1.3; }
+.food-item .fbrand { color:var(--muted); font-size:0.72rem; margin-top:2px; }
+.kcal-pill {
+  background: rgba(200,245,90,0.12);
+  color: var(--accent);
+  font-weight:700; font-size:0.78rem;
+  padding: 4px 8px; border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nutri-badge {
+  display: inline-block; padding: 1px 5px; border-radius: 4px;
+  font-weight:700; font-size:0.68rem; color:#fff; margin-left:4px; vertical-align:middle;
+}
+.ns-a{background:#1a9850} .ns-b{background:#91cf60;color:#333}
+.ns-c{background:#fee08b;color:#333} .ns-d{background:#fc8d59} .ns-e{background:#d73027}
+
+/* ── STATUS ── */
+.status-msg { text-align:center; color:var(--muted); font-size:0.82rem; padding:20px 0; }
+.loading { display:flex; align-items:center; justify-content:center; gap:8px; color:var(--muted); padding:20px; font-size:0.85rem; }
+.spinner { width:16px;height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── SCANNER PAGE ── */
+.scanner-wrap {
+  position: relative;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  aspect-ratio: 4/3;
+}
+#scanVideo {
+  width:100%; height:100%; object-fit:cover; display:block;
+}
+.scan-overlay-ui {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.scan-corners {
+  width: 200px; height: 130px; position:relative;
+}
+.scan-corners::before, .scan-corners::after,
+.sc2::before, .sc2::after {
+  content:''; position:absolute; width:24px; height:24px;
+  border-color: var(--accent); border-style:solid; border-width:0;
+}
+.scan-corners::before { top:0;left:0; border-top-width:3px; border-left-width:3px; border-radius:4px 0 0 0; }
+.scan-corners::after  { top:0;right:0; border-top-width:3px; border-right-width:3px; border-radius:0 4px 0 0; }
+.sc2::before { bottom:0;left:0; border-bottom-width:3px; border-left-width:3px; border-radius:0 0 0 4px; }
+.sc2::after  { bottom:0;right:0; border-bottom-width:3px; border-right-width:3px; border-radius:0 0 4px 0; }
+.scan-line {
+  position:absolute; left:12px; right:12px; height:2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scanAnim 2s ease-in-out infinite;
+  top: 20px;
+}
+@keyframes scanAnim { 0%,100%{top:20px} 50%{top:calc(100% - 20px)} }
+.scan-hint-txt {
+  margin-top:14px; color:#fff; font-size:0.75rem;
+  background:rgba(0,0,0,0.55); padding:4px 12px; border-radius:100px;
+}
+#scanCanvas { display:none; }
+
+/* ── LOG ITEMS ── */
+.log-meal-group { margin-bottom:8px; }
+.log-meal-title { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin: 10px 0 5px; }
+.log-item {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 11px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  animation: fadeUp 0.2s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+.log-item .lname { font-weight:600; font-size:0.88rem; }
+.log-item .lmeta { color:var(--muted); font-size:0.7rem; margin-top:2px; line-height:1.5; }
+.log-item .lkcal { color:var(--accent); font-weight:700; font-size:0.9rem; white-space:nowrap; }
+.del-btn { background:transparent; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:4px; margin-left:6px; transition:color 0.15s; }
+.del-btn:hover { color:var(--red); }
+
+/* ── SUMMARY PAGE ── */
+.big-ring-wrap { display:flex; flex-direction:column; align-items:center; padding:10px 0 14px; }
+.ring-total { font-family:'Syne',sans-serif; font-size:2.8rem; font-weight:800; line-height:1; color:var(--accent); }
+.ring-sub { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+.ring-remain { font-size:0.85rem; margin-top:6px; }
+.remain-ok { color:var(--green); }
+.remain-over { color:var(--red); }
+
+.macro-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.macro-cell {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px;
+}
+.macro-cell .mc-val { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:700; line-height:1; }
+.macro-cell .mc-label { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+.macro-cell .mc-bar { height:4px; background:var(--border); border-radius:100px; margin-top:8px; overflow:hidden; }
+.macro-cell .mc-fill { height:100%; border-radius:100px; transition:width 0.4s; }
+
+.nutrient-list { display:flex; flex-direction:column; gap:8px; }
+.nut-row { display:flex; align-items:center; gap:8px; }
+.nut-icon { font-size:0.95rem; width:20px; text-align:center; flex-shrink:0; }
+.nut-name { font-size:0.8rem; flex:1; }
+.nut-val { font-size:0.8rem; font-weight:600; white-space:nowrap; }
+.nut-bar { height:4px; background:var(--border); border-radius:100px; overflow:hidden; margin-top:3px; }
+.nut-fill { height:100%; border-radius:100px; transition:width 0.4s; }
+
+/* ── GOALS PAGE ── */
+.goal-item { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.goal-item label { flex:1; font-size:0.85rem; }
+.goal-item input { width:90px; }
+.goal-item .unit { color:var(--muted); font-size:0.78rem; width:30px; }
+
+/* ── MISC ── */
+.empty { color:var(--muted); text-align:center; padding:30px 0; font-size:0.85rem; }
+.badge-scanned {
+  background: rgba(200,245,90,0.15);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding:12px;
+  margin-bottom:10px;
+  display:none;
+}
+.badge-scanned.show { display:block; }
+.badge-scanned .bs-name { font-weight:700; font-size:0.95rem; margin-bottom:4px; }
+.badge-scanned .bs-meta { font-size:0.78rem; color:var(--muted); }
+.badge-scanned .bs-actions { margin-top:10px; display:flex; gap:8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Kalo<span>Count</span></div>
+  <button class="install-btn" id="installBtn">⬇ Instalovat</button>
+</div>
+
+<div class="pages">
+
+  <!-- ═══════════ PAGE: SEARCH ═══════════ -->
+  <div class="page active" id="page-search">
+    <div class="card">
+      <div class="card-title">🌐 Hledat potravinu</div>
+      <div class="row" style="margin-bottom:10px">
+        <input type="text" id="searchQ" placeholder="Název potraviny…" style="flex:1" onkeydown="if(event.key==='Enter'){doSearch();this.blur()}">
+        <button class="btn btn-sm" onclick="doSearch()">Hledat</button>
+      </div>
+      <div class="row">
+        <label>Množství</label>
+        <input type="number" id="searchG" value="100" min="1" max="5000">
+        <span style="color:var(--muted);font-size:0.8rem">g</span>
+        <select id="searchMeal">
+          <option>🌅 Snídaně</option>
+          <option>🍎 Svačina</option>
+          <option selected>🍽 Oběd</option>
+          <option>🥜 Odpolední svačina</option>
+          <option>🌙 Večeře</option>
+        </select>
+      </div>
+      <div id="searchResults" class="results">
+        <div class="status-msg">Zadejte název a hledejte</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Rychlá volba</div>
+      <div class="row" style="margin-bottom:8px">
+        <input type="text" id="localQ" placeholder="Filtrovat…" oninput="doLocalSearch()" style="flex:1">
+        <input type="number" id="localG" value="100" min="1" max="5000" style="width:70px">
+        <span style="color:var(--muted);font-size:0.8rem">g</span>
+        <select id="localMeal" style="max-width:120px">
+          <option>🌅 Snídaně</option>
+          <option>🍎 Svačina</option>
+          <option selected>🍽 Oběd</option>
+          <option>🥜 Odpolední svačina</option>
+          <option>🌙 Večeře</option>
+        </select>
+      </div>
+      <div id="localResults" class="results"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: SCANNER ═══════════ -->
+  <div class="page" id="page-scan">
+    <div class="card">
+      <div class="card-title">📷 Skenovat čárový kód</div>
+      <div class="scanner-wrap" id="scannerWrap" style="display:none">
+        <video id="scanVideo" autoplay playsinline muted></video>
+        <canvas id="scanCanvas"></canvas>
+        <div class="scan-overlay-ui">
+          <div class="scan-corners"><div class="sc2"></div><div class="scan-line"></div></div>
+          <div class="scan-hint-txt">Namiřte na čárový kód produktu</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="startCamBtn" onclick="startCamera()">📷 Spustit kameru</button>
+      <button class="btn btn-ghost" id="stopCamBtn" onclick="stopCamera()" style="display:none;margin-top:8px">⏹ Zastavit kameru</button>
+
+      <div style="margin:14px 0 10px;text-align:center;color:var(--muted);font-size:0.78rem">— nebo zadejte EAN/UPC ručně —</div>
+      <div class="row">
+        <input type="text" id="manualBarcode" placeholder="5901234123457…" style="flex:1" onkeydown="if(event.key==='Enter'){lookupBarcode(this.value.trim());this.blur()}">
+        <button class="btn btn-sm" onclick="lookupBarcode(document.getElementById('manualBarcode').value.trim())">OK</button>
+      </div>
+    </div>
+
+    <div class="badge-scanned" id="scannedResult">
+      <div class="bs-name" id="bsName"></div>
+      <div class="bs-meta" id="bsMeta"></div>
+      <div class="row" style="margin-top:10px">
+        <label>Množství</label>
+        <input type="number" id="scanG" value="100" min="1" max="5000">
+        <span style="color:var(--muted);font-size:0.8rem">g</span>
+        <select id="scanMeal">
+          <option>🌅 Snídaně</option>
+          <option>🍎 Svačina</option>
+          <option selected>🍽 Oběd</option>
+          <option>🥜 Odpolední svačina</option>
+          <option>🌙 Večeře</option>
+        </select>
+      </div>
+      <div class="bs-actions">
+        <button class="btn btn-primary" style="flex:1" onclick="addScannedFood()">+ Přidat do deníku</button>
+        <button class="btn btn-ghost" onclick="clearScanned()">✕</button>
+      </div>
+    </div>
+    <div id="scanStatus" class="status-msg" style="display:none"></div>
+  </div>
+
+  <!-- ═══════════ PAGE: LOG ═══════════ -->
+  <div class="page" id="page-log">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem">📝 Denní deník</div>
+      <button class="btn btn-danger" onclick="clearLog()">Vymazat vše</button>
+    </div>
+    <div id="logContainer">
+      <div class="empty">Zatím nic nezaznamenáno.<br>Přidejte první potravinu 🥗</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: SUMMARY ═══════════ -->
+  <div class="page" id="page-summary">
+    <div class="card">
+      <div class="big-ring-wrap">
+        <svg width="130" height="130" viewBox="0 0 130 130">
+          <circle cx="65" cy="65" r="55" fill="none" stroke="#2e3548" stroke-width="12"/>
+          <circle id="ringArc" cx="65" cy="65" r="55" fill="none" stroke="#c8f55a" stroke-width="12"
+            stroke-dasharray="345.4" stroke-dashoffset="345.4"
+            stroke-linecap="round" transform="rotate(-90 65 65)"
+            style="transition:stroke-dashoffset 0.6s ease,stroke 0.3s"/>
+        </svg>
+        <div style="margin-top:-8px;text-align:center">
+          <div class="ring-total" id="ringTotal">0</div>
+          <div class="ring-sub">kcal přijato dnes</div>
+          <div class="ring-remain" id="ringRemain"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="macro-grid">
+      <div class="macro-cell">
+        <div class="mc-val" id="sProtein" style="color:var(--blue)">0g</div>
+        <div class="mc-label">🥩 Bílkoviny</div>
+        <div class="mc-bar"><div class="mc-fill" id="bsProtein" style="background:var(--blue);width:0%"></div></div>
+      </div>
+      <div class="macro-cell">
+        <div class="mc-val" id="sCarbs" style="color:#f6c90e">0g</div>
+        <div class="mc-label">🍞 Sacharidy</div>
+        <div class="mc-bar"><div class="mc-fill" id="bsCarbs" style="background:#f6c90e;width:0%"></div></div>
+      </div>
+      <div class="macro-cell">
+        <div class="mc-val" id="sFat" style="color:var(--orange)">0g</div>
+        <div class="mc-label">🧈 Tuky</div>
+        <div class="mc-bar"><div class="mc-fill" id="bsFat" style="background:var(--orange);width:0%"></div></div>
+      </div>
+      <div class="macro-cell">
+        <div class="mc-val" id="sFiber" style="color:var(--green)">0g</div>
+        <div class="mc-label">🌾 Vláknina</div>
+        <div class="mc-bar"><div class="mc-fill" id="bsFiber" style="background:var(--green);width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Detailní živiny</div>
+      <div class="nutrient-list">
+        <div>
+          <div class="nut-row"><span class="nut-icon">🍬</span><span class="nut-name">z toho cukry</span><span class="nut-val" id="sSugars">0 g</span></div>
+          <div class="nut-bar"><div class="nut-fill" id="bsSugars" style="background:#f6c90e;width:0%"></div></div>
+        </div>
+        <div>
+          <div class="nut-row"><span class="nut-icon">🔴</span><span class="nut-name">Nasycené tuky</span><span class="nut-val" id="sSatFat">0 g</span></div>
+          <div class="nut-bar"><div class="nut-fill" id="bsSatFat" style="background:var(--red);width:0%"></div></div>
+        </div>
+        <div>
+          <div class="nut-row"><span class="nut-icon">🧂</span><span class="nut-name">Sůl</span><span class="nut-val" id="sSalt">0 g</span></div>
+          <div class="nut-bar"><div class="nut-fill" id="bsSalt" style="background:var(--purple);width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAGE: GOALS ═══════════ -->
+  <div class="page" id="page-goals">
+    <div class="card">
+      <div class="card-title">⚙️ Denní cíle</div>
+      <div class="goal-item"><label>🔥 Kalorie</label><input type="number" id="gKcal" value="2000" oninput="saveGoals();updateSummary()"><span class="unit">kcal</span></div>
+      <div class="goal-item"><label>🥩 Bílkoviny</label><input type="number" id="gProtein" value="150" oninput="saveGoals();updateSummary()"><span class="unit">g</span></div>
+      <div class="goal-item"><label>🍞 Sacharidy</label><input type="number" id="gCarbs" value="250" oninput="saveGoals();updateSummary()"><span class="unit">g</span></div>
+      <div class="goal-item"><label>🧈 Tuky</label><input type="number" id="gFat" value="65" oninput="saveGoals();updateSummary()"><span class="unit">g</span></div>
+      <div class="goal-item"><label>🌾 Vláknina</label><input type="number" id="gFiber" value="25" oninput="saveGoals();updateSummary()"><span class="unit">g</span></div>
+      <div class="goal-item"><label>🍬 Cukry</label><input type="number" id="gSugars" value="50" oninput="saveGoals();updateSummary()"><span class="unit">g</span></div>
+      <div class="goal-item"><label>🔴 Nas. tuky</label><input type="number" id="gSatFat" value="20" oninput="saveGoals();updateSummary()"><span class="unit">g</span></div>
+      <div class="goal-item"><label>🧂 Sůl</label><input type="number" id="gSalt" value="6" oninput="saveGoals();updateSummary()"><span class="unit">g</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">ℹ️ Instalace</div>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.7">
+        <b style="color:var(--text)">Android/Chrome:</b> Menu → "Přidat na plochu"<br>
+        <b style="color:var(--text)">iPhone/Safari:</b> Sdílet → "Přidat na plochu"<br>
+        <b style="color:var(--text)">Desktop Chrome:</b> Klikněte na ⬇ Instalovat v hlavičce
+      </p>
+    </div>
+  </div>
+
+</div><!-- /pages -->
+
+<!-- BOTTOM NAV -->
+<nav class="nav">
+  <button class="nav-item active" onclick="goTo('search',this)">
+    <span class="nav-icon">🔍</span><span>Hledat</span>
+  </button>
+  <button class="nav-item" onclick="goTo('log',this)">
+    <span class="nav-icon">📝</span><span>Deník</span>
+  </button>
+  <button class="nav-item scan-nav" onclick="goTo('scan',this)">
+    <div class="nav-icon-wrap">📷</div>
+    <span>Sken</span>
+  </button>
+  <button class="nav-item" onclick="goTo('summary',this)">
+    <span class="nav-icon">📊</span><span>Přehled</span>
+  </button>
+  <button class="nav-item" onclick="goTo('goals',this)">
+    <span class="nav-icon">⚙️</span><span>Cíle</span>
+  </button>
+</nav>
+
+<script>
+// ═══ LOCAL DB ═══
+const localDB = [
+  {n:'Kuřecí prsa',b:'Maso',kcal:165,p:31,c:0,s:0,f:3.6,sf:1,fi:0,sa:0.1},
+  {n:'Lososos',b:'Ryby',kcal:208,p:20,c:0,s:0,f:13,sf:3,fi:0,sa:0.15},
+  {n:'Tuňák (konzerva)',b:'Ryby',kcal:116,p:26,c:0,s:0,f:1,sf:0.3,fi:0,sa:0.5},
+  {n:'Hovězí mleté',b:'Maso',kcal:250,p:26,c:0,s:0,f:17,sf:6.7,fi:0,sa:0.1},
+  {n:'Vejce',b:'Vejce',kcal:155,p:13,c:1.1,s:1,f:11,sf:3.3,fi:0,sa:0.4},
+  {n:'Ovesné vločky',b:'Obiloviny',kcal:389,p:17,c:66,s:1,f:7,sf:1.3,fi:10,sa:0},
+  {n:'Rýže bílá (vařená)',b:'Obiloviny',kcal:130,p:2.7,c:28,s:0,f:0.3,sf:0.1,fi:0.4,sa:0},
+  {n:'Těstoviny (vařené)',b:'Obiloviny',kcal:131,p:5,c:25,s:0.6,f:1.1,sf:0.2,fi:1.8,sa:0},
+  {n:'Chleba celozrnný',b:'Pečivo',kcal:247,p:9,c:41,s:4,f:3.5,sf:0.7,fi:6,sa:1.1},
+  {n:'Brambory vařené',b:'Zelenina',kcal:77,p:2,c:17,s:0.8,f:0.1,sf:0,fi:2.2,sa:0},
+  {n:'Jogurt bílý',b:'Mléčné',kcal:61,p:3.5,c:4.7,s:4.7,f:3.3,sf:2.1,fi:0,sa:0.1},
+  {n:'Řecký jogurt',b:'Mléčné',kcal:97,p:9,c:4,s:4,f:5,sf:3.3,fi:0,sa:0.08},
+  {n:'Tvaroh polotučný',b:'Mléčné',kcal:84,p:12,c:3.4,s:3,f:2.5,sf:1.6,fi:0,sa:0.07},
+  {n:'Mléko polotučné',b:'Mléčné',kcal:46,p:3.3,c:4.7,s:4.7,f:1.5,sf:1,fi:0,sa:0.1},
+  {n:'Sýr eidam 30%',b:'Mléčné',kcal:236,p:26,c:0,s:0,f:14,sf:9,fi:0,sa:1.8},
+  {n:'Máslo',b:'Mléčné',kcal:717,p:0.9,c:0.1,s:0.1,f:81,sf:51,fi:0,sa:1.6},
+  {n:'Brokolice',b:'Zelenina',kcal:34,p:2.8,c:7,s:1.7,f:0.4,sf:0.1,fi:2.6,sa:0.04},
+  {n:'Špenát',b:'Zelenina',kcal:23,p:2.9,c:4,s:0.4,f:0.4,sf:0.1,fi:2.2,sa:0.1},
+  {n:'Mrkev',b:'Zelenina',kcal:41,p:0.9,c:10,s:4.7,f:0.2,sf:0,fi:2.8,sa:0.07},
+  {n:'Rajče',b:'Zelenina',kcal:18,p:0.9,c:4,s:2.6,f:0.2,sf:0,fi:1.2,sa:0.01},
+  {n:'Paprika červená',b:'Zelenina',kcal:31,p:1,c:6,s:4.2,f:0.3,sf:0,fi:2.1,sa:0.01},
+  {n:'Okurka',b:'Zelenina',kcal:16,p:0.7,c:4,s:1.7,f:0.1,sf:0,fi:0.5,sa:0.01},
+  {n:'Jablko',b:'Ovoce',kcal:52,p:0.3,c:14,s:10,f:0.2,sf:0,fi:2.4,sa:0},
+  {n:'Banán',b:'Ovoce',kcal:89,p:1.1,c:23,s:12,f:0.3,sf:0.1,fi:2.6,sa:0},
+  {n:'Pomeranč',b:'Ovoce',kcal:47,p:0.9,c:12,s:9.4,f:0.1,sf:0,fi:2.4,sa:0},
+  {n:'Jahody',b:'Ovoce',kcal:32,p:0.7,c:8,s:4.9,f:0.3,sf:0,fi:2,sa:0},
+  {n:'Avokádo',b:'Ovoce',kcal:160,p:2,c:9,s:0.7,f:15,sf:2.1,fi:6.7,sa:0.01},
+  {n:'Borůvky',b:'Ovoce',kcal:57,p:0.7,c:14,s:9.9,f:0.3,sf:0,fi:2.4,sa:0},
+  {n:'Čočka (vařená)',b:'Luštěniny',kcal:116,p:9,c:20,s:1.8,f:0.4,sf:0.1,fi:7.9,sa:0},
+  {n:'Cizrna (vařená)',b:'Luštěniny',kcal:164,p:9,c:27,s:4.8,f:2.6,sf:0.3,fi:7.6,sa:0.02},
+  {n:'Fazole červené',b:'Luštěniny',kcal:127,p:8.7,c:22.8,s:0.3,f:0.5,sf:0.1,fi:6.4,sa:0},
+  {n:'Mandle',b:'Ořechy',kcal:579,p:21,c:22,s:4.4,f:50,sf:3.8,fi:12.5,sa:0.01},
+  {n:'Vlašské ořechy',b:'Ořechy',kcal:654,p:15,c:14,s:2.6,f:65,sf:6.1,fi:6.7,sa:0.01},
+  {n:'Arašídové máslo',b:'Ořechy',kcal:588,p:25,c:20,s:9,f:50,sf:10,fi:6,sa:1.1},
+  {n:'Chia semínka',b:'Ořechy',kcal:486,p:17,c:42,s:0,f:31,sf:3.3,fi:34.4,sa:0.02},
+  {n:'Čokoláda hořká 70%',b:'Sladkosti',kcal:598,p:7,c:46,s:25,f:42,sf:24,fi:10.9,sa:0.02},
+  {n:'Med',b:'Sladkosti',kcal:304,p:0.3,c:82,s:82,f:0,sf:0,fi:0.2,sa:0.01},
+  {n:'Coca Cola',b:'Nápoje',kcal:42,p:0,c:11,s:11,f:0,sf:0,fi:0,sa:0.01},
+  {n:'Pivo světlé',b:'Nápoje',kcal:43,p:0.5,c:3.5,s:0,f:0,sf:0,fi:0,sa:0},
+  {n:'Pomerančový džus',b:'Nápoje',kcal:45,p:0.7,c:10,s:8.4,f:0.2,sf:0,fi:0.2,sa:0},
+  {n:'Pizza margherita',b:'Hotová jídla',kcal:266,p:11,c:33,s:3.6,f:10,sf:4.8,fi:2.3,sa:1.5},
+  {n:'Hamburger',b:'Hotová jídla',kcal:295,p:17,c:24,s:5,f:14,sf:5.2,fi:1.4,sa:1.2},
+  {n:'Hranolky',b:'Hotová jídla',kcal:312,p:3.4,c:41,s:0.3,f:15,sf:2.1,fi:3.8,sa:0.5},
+  {n:'Losos (konzerva)',b:'Ryby',kcal:139,p:19.8,c:0,s:0,f:6.9,sf:1.6,fi:0,sa:0.9},
+  {n:'Krůtí prsa',b:'Maso',kcal:135,p:29,c:0,s:0,f:1,sf:0.3,fi:0,sa:0.1},
+  {n:'Krevety vařené',b:'Ryby',kcal:99,p:24,c:0,s:0,f:0.3,sf:0,fi:0,sa:1},
+  {n:'Quinoa (vařená)',b:'Obiloviny',kcal:120,p:4,c:21,s:0.9,f:2,sf:0.2,fi:2.8,sa:0.01},
+];
+
+// ═══ STATE ═══
+let log = JSON.parse(localStorage.getItem('kc_log') || '[]');
+let goals = JSON.parse(localStorage.getItem('kc_goals') || 'null') || {kcal:2000,protein:150,carbs:250,fat:65,fiber:25,sugars:50,satFat:20,salt:6};
+let scannedProduct = null;
+let cameraStream = null;
+let scanInterval = null;
+
+// ═══ NAV ═══
+function goTo(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id !== 'scan') stopCamera();
+  if(id === 'summary') updateSummary();
+  if(id === 'log') renderLog();
+}
+
+// ═══ ONLINE SEARCH ═══
+async function doSearch() {
+  const q = document.getElementById('searchQ').value.trim();
+  if(!q) return;
+  const el = document.getElementById('searchResults');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Hledám…</div>';
+  try {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=12&fields=id,product_name,brands,nutriments,nutriscore_grade`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const valid = (data.products||[]).filter(p => p.product_name && p.nutriments && (p.nutriments['energy-kcal_100g']||p.nutriments['energy-kcal']));
+    if(!valid.length){ el.innerHTML='<div class="status-msg">Nic nenalezeno. Zkuste jiný výraz.</div>'; return; }
+    el.innerHTML = valid.slice(0,10).map(p => {
+      const kcal = Math.round(p.nutriments['energy-kcal_100g']||p.nutriments['energy-kcal']||0);
+      const ns = p.nutriscore_grade ? `<span class="nutri-badge ns-${p.nutriscore_grade}">${p.nutriscore_grade.toUpperCase()}</span>` : '';
+      const data64 = encodeURIComponent(JSON.stringify({
+        name: p.product_name, brand: p.brands||'',
+        kcal: p.nutriments['energy-kcal_100g']||0,
+        protein: p.nutriments.proteins_100g||0,
+        carbs: p.nutriments.carbohydrates_100g||0,
+        sugars: p.nutriments.sugars_100g||0,
+        fat: p.nutriments.fat_100g||0,
+        satFat: p.nutriments['saturated-fat_100g']||0,
+        fiber: p.nutriments.fiber_100g||0,
+        salt: p.nutriments.salt_100g||0,
+      }));
+      return `<div class="food-item" onclick="addSearchFood('${data64}')">
+        <div><div class="fname">${p.product_name}${ns}</div><div class="fbrand">${p.brands||'Neznámá značka'}</div></div>
+        <span class="kcal-pill">${kcal} kcal</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="status-msg">⚠️ Chyba připojení k internetu.</div>';
+  }
+}
+
+function addSearchFood(data64) {
+  const f = JSON.parse(decodeURIComponent(data64));
+  const g = +document.getElementById('searchG').value||100;
+  const meal = document.getElementById('searchMeal').value;
+  addToLog(f, g, meal);
+}
+
+// ═══ LOCAL SEARCH ═══
+function doLocalSearch() {
+  const q = document.getElementById('localQ').value.toLowerCase().trim();
+  const el = document.getElementById('localResults');
+  const src = q ? localDB.filter(f => f.n.toLowerCase().includes(q)) : localDB.slice(0,12);
+  if(!src.length){ el.innerHTML='<div class="status-msg">Nic nenalezeno.</div>'; return; }
+  el.innerHTML = src.slice(0,15).map(f => {
+    const idx = localDB.indexOf(f);
+    return `<div class="food-item" onclick="addLocalFood(${idx})">
+      <div><div class="fname">${f.n}</div><div class="fbrand">${f.b} · ${f.kcal} kcal/100g</div></div>
+      <span class="kcal-pill">${f.kcal}</span>
+    </div>`;
+  }).join('');
+}
+
+function addLocalFood(idx) {
+  const f = localDB[idx];
+  const g = +document.getElementById('localG').value||100;
+  const meal = document.getElementById('localMeal').value;
+  addToLog({name:f.n,brand:f.b,kcal:f.kcal,protein:f.p,carbs:f.c,sugars:f.s,fat:f.f,satFat:f.sf,fiber:f.fi,salt:f.sa}, g, meal);
+}
+
+// ═══ CAMERA SCANNER ═══
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal:'environment' }, width:{ideal:1280}, height:{ideal:720} }
+    });
+    cameraStream = stream;
+    const video = document.getElementById('scanVideo');
+    video.srcObject = stream;
+    await video.play();
+    document.getElementById('scannerWrap').style.display = 'block';
+    document.getElementById('startCamBtn').style.display = 'none';
+    document.getElementById('stopCamBtn').style.display = 'flex';
+
+    // Use BarcodeDetector if available (Android Chrome, etc.)
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39'] });
+      scanInterval = setInterval(async () => {
+        if(!cameraStream) return;
+        try {
+          const barcodes = await detector.detect(video);
+          if(barcodes.length > 0) {
+            const code = barcodes[0].rawValue;
+            stopCamera();
+            lookupBarcode(code);
+          }
+        } catch(e){}
+      }, 500);
+    } else {
+      // Fallback: canvas frame grab + ZXing via CDN
+      loadZXing();
+    }
+  } catch(e) {
+    alert('Nepodařilo se spustit kameru.\n\nZkontrolujte:\n• Povolení kamery v prohlížeči\n• Použijte Chrome nebo Safari\n• Na iPhone otevřete v Safari\n\nChyba: ' + e.message);
+  }
+}
+
+function loadZXing() {
+  if(window.ZXing) { startZXingScan(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.3/umd/index.min.js';
+  s.onload = startZXingScan;
+  s.onerror = () => {
+    document.getElementById('scanStatus').style.display = 'block';
+    document.getElementById('scanStatus').textContent = 'Skenování není podporováno v tomto prohlížeči. Zadejte kód ručně.';
+  };
+  document.head.appendChild(s);
+}
+
+function startZXingScan() {
+  const video = document.getElementById('scanVideo');
+  const canvas = document.getElementById('scanCanvas');
+  const ctx = canvas.getContext('2d');
+  try {
+    const hints = new Map();
+    const formats = [
+      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.CODE_128
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    const reader = new ZXing.MultiFormatReader();
+    reader.setHints(hints);
+    scanInterval = setInterval(() => {
+      if(!cameraStream || video.readyState < 2) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      try {
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const lum = new ZXing.RGBLuminanceSource(imgData.data, canvas.width, canvas.height);
+        const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+        const result = reader.decode(bmp);
+        if(result) { stopCamera(); lookupBarcode(result.getText()); }
+      } catch(e){}
+    }, 300);
+  } catch(e) {
+    document.getElementById('scanStatus').style.display = 'block';
+    document.getElementById('scanStatus').textContent = 'Zadejte kód ručně.';
+  }
+}
+
+function stopCamera() {
+  if(scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+  if(cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  const video = document.getElementById('scanVideo');
+  video.srcObject = null;
+  document.getElementById('scannerWrap').style.display = 'none';
+  document.getElementById('startCamBtn').style.display = 'flex';
+  document.getElementById('stopCamBtn').style.display = 'none';
+}
+
+// ═══ BARCODE LOOKUP ═══
+async function lookupBarcode(code) {
+  if(!code) return;
+  document.getElementById('manualBarcode').value = code;
+  document.getElementById('scanStatus').style.display = 'block';
+  document.getElementById('scanStatus').textContent = `🔍 Hledám kód ${code}…`;
+  document.getElementById('scannedResult').classList.remove('show');
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+    const data = await res.json();
+    if(data.status !== 1 || !data.product) {
+      document.getElementById('scanStatus').textContent = '⚠️ Produkt nenalezen v databázi.';
+      return;
+    }
+    const p = data.product;
+    const n = p.nutriments||{};
+    scannedProduct = {
+      name: p.product_name||'Neznámý produkt',
+      brand: p.brands||'',
+      kcal: n['energy-kcal_100g']||n['energy-kcal']||0,
+      protein: n.proteins_100g||0,
+      carbs: n.carbohydrates_100g||0,
+      sugars: n.sugars_100g||0,
+      fat: n.fat_100g||0,
+      satFat: n['saturated-fat_100g']||0,
+      fiber: n.fiber_100g||0,
+      salt: n.salt_100g||0,
+    };
+    const ns = p.nutriscore_grade ? `<span class="nutri-badge ns-${p.nutriscore_grade}">${p.nutriscore_grade.toUpperCase()}</span>` : '';
+    document.getElementById('bsName').innerHTML = `${scannedProduct.name} ${ns}`;
+    document.getElementById('bsMeta').innerHTML = `${scannedProduct.brand ? scannedProduct.brand+'<br>' : ''}
+      <b>${Math.round(scannedProduct.kcal)}</b> kcal · B:${scannedProduct.protein}g · S:${scannedProduct.carbs}g · T:${scannedProduct.fat}g`;
+    document.getElementById('scannedResult').classList.add('show');
+    document.getElementById('scanStatus').style.display = 'none';
+  } catch(e) {
+    document.getElementById('scanStatus').textContent = '⚠️ Chyba připojení.';
+  }
+}
+
+function addScannedFood() {
+  if(!scannedProduct) return;
+  const g = +document.getElementById('scanG').value||100;
+  const meal = document.getElementById('scanMeal').value;
+  addToLog(scannedProduct, g, meal);
+  clearScanned();
+  // Switch to log
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[1].classList.add('active');
+  goTo('log', null);
+}
+
+function clearScanned() {
+  scannedProduct = null;
+  document.getElementById('scannedResult').classList.remove('show');
+  document.getElementById('manualBarcode').value = '';
+  document.getElementById('scanStatus').style.display = 'none';
+}
+
+// ═══ LOG ═══
+const r = v => Math.round(v*10)/10;
+
+function addToLog(food, grams, meal) {
+  const ratio = grams/100;
+  log.push({
+    name: food.name, brand: food.brand||'', grams, meal,
+    kcal: r(food.kcal*ratio),
+    protein: r(food.protein*ratio),
+    carbs: r(food.carbs*ratio),
+    sugars: r((food.sugars||0)*ratio),
+    fat: r(food.fat*ratio),
+    satFat: r((food.satFat||0)*ratio),
+    fiber: r((food.fiber||0)*ratio),
+    salt: r((food.salt||0)*ratio),
+    ts: Date.now()
+  });
+  saveLog();
+  // Switch to log tab
+  goTo('log', null);
+  document.querySelectorAll('.nav-item').forEach((n,i) => n.classList.toggle('active', i===1));
+}
+
+function saveLog() {
+  localStorage.setItem('kc_log', JSON.stringify(log));
+  renderLog();
+  updateSummary();
+}
+
+const MEAL_ORDER = ['🌅 Snídaně','🍎 Svačina','🍽 Oběd','🥜 Odpolední svačina','🌙 Večeře'];
+
+function renderLog() {
+  const c = document.getElementById('logContainer');
+  if(!log.length){ c.innerHTML='<div class="empty">Zatím nic nezaznamenáno.<br>Přidejte první potravinu 🥗</div>'; return; }
+  let html = '';
+  MEAL_ORDER.forEach(meal => {
+    const items = log.filter(e => e.meal===meal);
+    if(!items.length) return;
+    const mKcal = items.reduce((a,e) => a+e.kcal, 0);
+    html += `<div class="log-meal-title">${meal} <span style="color:var(--accent);font-weight:700">${Math.round(mKcal)} kcal</span></div>`;
+    items.forEach(e => {
+      const idx = log.indexOf(e);
+      html += `<div class="log-item">
+        <div style="flex:1;min-width:0">
+          <div class="lname">${e.name}</div>
+          <div class="lmeta">${e.grams}g · B:${e.protein}g · S:${e.carbs}g(c:${e.sugars}g) · T:${e.fat}g · V:${e.fiber}g · Sůl:${e.salt}g</div>
+        </div>
+        <div style="display:flex;align-items:center;flex-shrink:0">
+          <div class="lkcal">${e.kcal}<br><span style="font-size:0.62rem;color:var(--muted);font-weight:400">kcal</span></div>
+          <button class="del-btn" onclick="removeEntry(${idx})">✕</button>
+        </div>
+      </div>`;
+    });
+  });
+  c.innerHTML = html;
+}
+
+function removeEntry(i) { log.splice(i,1); saveLog(); }
+function clearLog() { if(confirm('Smazat celý dnešní deník?')){ log=[]; saveLog(); } }
+
+// ═══ SUMMARY ═══
+function updateSummary() {
+  const t = log.reduce((a,e) => ({
+    kcal:a.kcal+e.kcal, protein:a.protein+e.protein, carbs:a.carbs+e.carbs,
+    sugars:a.sugars+e.sugars, fat:a.fat+e.fat, satFat:a.satFat+e.satFat,
+    fiber:a.fiber+e.fiber, salt:a.salt+e.salt
+  }), {kcal:0,protein:0,carbs:0,sugars:0,fat:0,satFat:0,fiber:0,salt:0});
+
+  const g = goals;
+  document.getElementById('ringTotal').textContent = Math.round(t.kcal);
+  const pct = Math.min(t.kcal/g.kcal, 1);
+  const circ = 345.4;
+  document.getElementById('ringArc').style.strokeDashoffset = circ - pct*circ;
+  document.getElementById('ringArc').style.stroke = t.kcal > g.kcal ? '#ff4d4d' : '#c8f55a';
+  const rem = g.kcal - Math.round(t.kcal);
+  const remEl = document.getElementById('ringRemain');
+  remEl.textContent = rem >= 0 ? `Zbývá ${rem} kcal` : `Překročeno o ${Math.abs(rem)} kcal`;
+  remEl.className = 'ring-remain ' + (rem >= 0 ? 'remain-ok' : 'remain-over');
+
+  const setMacro = (id, bid, val, goal) => {
+    document.getElementById(id).textContent = r(val)+'g';
+    document.getElementById(bid).style.width = Math.min((val/(goal||1))*100,100)+'%';
+  };
+  setMacro('sProtein','bsProtein',t.protein,g.protein);
+  setMacro('sCarbs','bsCarbs',t.carbs,g.carbs);
+  setMacro('sFat','bsFat',t.fat,g.fat);
+  setMacro('sFiber','bsFiber',t.fiber,g.fiber);
+
+  document.getElementById('sSugars').textContent = r(t.sugars)+' g';
+  document.getElementById('bsSugars').style.width = Math.min((t.sugars/(g.sugars||1))*100,100)+'%';
+  document.getElementById('sSatFat').textContent = r(t.satFat)+' g';
+  document.getElementById('bsSatFat').style.width = Math.min((t.satFat/(g.satFat||1))*100,100)+'%';
+  document.getElementById('sSalt').textContent = r(t.salt)+' g';
+  document.getElementById('bsSalt').style.width = Math.min((t.salt/(g.salt||1))*100,100)+'%';
+}
+
+// ═══ GOALS ═══
+function saveGoals() {
+  goals = {
+    kcal: +document.getElementById('gKcal').value||2000,
+    protein: +document.getElementById('gProtein').value||150,
+    carbs: +document.getElementById('gCarbs').value||250,
+    fat: +document.getElementById('gFat').value||65,
+    fiber: +document.getElementById('gFiber').value||25,
+    sugars: +document.getElementById('gSugars').value||50,
+    satFat: +document.getElementById('gSatFat').value||20,
+    salt: +document.getElementById('gSalt').value||6,
+  };
+  localStorage.setItem('kc_goals', JSON.stringify(goals));
+}
+
+function loadGoals() {
+  Object.entries(goals).forEach(([k,v]) => {
+    const el = document.getElementById('g'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el) el.value = v;
+  });
+}
+
+// ═══ INSTALL PWA ═══
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').style.display = 'block';
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const {outcome} = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBtn').style.display = 'none';
+});
+
+// ═══ SERVICE WORKER ═══
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ═══ INIT ═══
+loadGoals();
+doLocalSearch();
+renderLog();
+updateSummary();
+</script>
+</body>
+</html>
